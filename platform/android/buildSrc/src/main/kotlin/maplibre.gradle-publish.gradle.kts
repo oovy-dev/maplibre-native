@@ -24,10 +24,21 @@ androidLibrary.publishing {
     singleVariant("openglDebug")
 }
 
+val isLocalOovyPublication = providers
+    .gradleProperty("oovy.localPublication")
+    .map { it.toBoolean() }
+    .orElse(false)
+
 afterEvaluate {
     mavenPublishing {
-        publishToMavenCentral(true)
-        signAllPublications()
+        if (isLocalOovyPublication.get()) {
+            project.logger.lifecycle(
+                "OOVY local Maven publication: Central and PGP signing disabled."
+            )
+        } else {
+            publishToMavenCentral(true)
+            signAllPublications()
+        }
     }
 }
 
