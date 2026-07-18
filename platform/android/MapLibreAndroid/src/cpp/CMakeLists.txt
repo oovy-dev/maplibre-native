@@ -214,6 +214,7 @@ add_library(maplibre SHARED
             ${PROJECT_SOURCE_DIR}/style/value.hpp
             ${PROJECT_SOURCE_DIR}/tile/tile_operation.cpp
             ${PROJECT_SOURCE_DIR}/oovy/oovy_cube_layer.cpp
+            ${PROJECT_SOURCE_DIR}/oovy/oovy_glb_inspector.cpp
             ${PROJECT_SOURCE_DIR}/util/default_style.cpp
             ${PROJECT_SOURCE_DIR}/util/tile_server_options.cpp
             ${PROJECT_SOURCE_DIR}/util/default_style.hpp
@@ -256,7 +257,8 @@ target_include_directories(
   PRIVATE ${PROJECT_SOURCE_DIR}
           ../../../../../src
           ../../../src
-          ../../../../default/include)
+          ../../../../default/include
+          ../../../../../vendor/cgltf)
 
 target_compile_options(maplibre
                        PRIVATE $<$<CONFIG:Release>:-Oz>
