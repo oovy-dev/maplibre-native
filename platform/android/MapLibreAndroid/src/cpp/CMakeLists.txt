@@ -2,6 +2,23 @@ cmake_minimum_required(VERSION 3.10)
 
 project(MapLibreAndroid)
 
+# Maven release publication uses RelWithDebInfo. Disable native debug symbols
+# locally to keep the Windows/NDK linker memory consumption manageable.
+if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    set(
+        CMAKE_C_FLAGS_RELWITHDEBINFO
+        "-O2 -DNDEBUG -g0"
+        CACHE STRING "Lean RelWithDebInfo C flags"
+        FORCE
+    )
+    set(
+        CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        "-O2 -DNDEBUG -g0"
+        CACHE STRING "Lean RelWithDebInfo C++ flags"
+        FORCE
+    )
+endif()
+
 add_subdirectory(../../../../../
                  ../../../../../${ANDROID_ABI})
 
@@ -196,7 +213,7 @@ add_library(maplibre SHARED
             ${PROJECT_SOURCE_DIR}/style/value.cpp
             ${PROJECT_SOURCE_DIR}/style/value.hpp
             ${PROJECT_SOURCE_DIR}/tile/tile_operation.cpp
-            ${PROJECT_SOURCE_DIR}/oovy/oovy_triangle_layer.cpp
+            ${PROJECT_SOURCE_DIR}/oovy/oovy_cube_layer.cpp
             ${PROJECT_SOURCE_DIR}/util/default_style.cpp
             ${PROJECT_SOURCE_DIR}/util/tile_server_options.cpp
             ${PROJECT_SOURCE_DIR}/util/default_style.hpp

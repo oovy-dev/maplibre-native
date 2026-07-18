@@ -5,12 +5,12 @@ import androidx.annotation.Keep;
 import org.maplibre.android.style.layers.CustomLayer;
 
 /**
- * Temporary native layer used to validate the OOVY rendering pipeline.
+ * Georeferenced cube rendered directly in the MapLibre OpenGL scene.
  */
 @Keep
-public final class OovyTriangleLayer extends CustomLayer {
+public final class OovyCubeLayer extends CustomLayer {
 
-  public OovyTriangleLayer(String id) {
+  public OovyCubeLayer(String id) {
     super(id, nativeCreateHost());
   }
 
