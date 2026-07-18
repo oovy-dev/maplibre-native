@@ -196,6 +196,7 @@ add_library(maplibre SHARED
             ${PROJECT_SOURCE_DIR}/style/value.cpp
             ${PROJECT_SOURCE_DIR}/style/value.hpp
             ${PROJECT_SOURCE_DIR}/tile/tile_operation.cpp
+            ${PROJECT_SOURCE_DIR}/oovy/oovy_triangle_layer.cpp
             ${PROJECT_SOURCE_DIR}/util/default_style.cpp
             ${PROJECT_SOURCE_DIR}/util/tile_server_options.cpp
             ${PROJECT_SOURCE_DIR}/util/default_style.hpp
