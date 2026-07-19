@@ -27,11 +27,11 @@ constexpr double kLatitude = 48.8582599;
 constexpr double kLongitude = 2.2945006;
 
 constexpr float kTargetModelHeightMeters = 330.0f;
-constexpr float kTargetModelFootprintMeters = 125.0f;
+constexpr float kTargetModelFootprintMeters = 124.9f;
 
 // Rotation horaire dans le repère local X=est, Y=sud.
 // 45° constitue le point de départ pour aligner les piliers avec l'empreinte.
-constexpr float kModelYawDegrees = 45.0f;
+constexpr float kModelYawDegrees = 43.9f;
 
 constexpr float kPi = 3.14159265358979323846f;
 
