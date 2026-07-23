@@ -161,13 +161,11 @@ public:
             vec3 lightDirection =
                 normalize(vec3(-0.4, -0.6, 0.7));
 
-            float diffuse =
-                0.35 +
-                0.65 *
-                abs(dot(normal, lightDirection));
+            float diffuse = 0.68 + 0.32 * abs(dot(normal, lightDirection));
 
+            // Brun ocre chaud #A67C3B, totalement opaque.
             vec3 baseColor =
-                vec3(0.0, 0.72, 0.84);
+                vec3(0.651, 0.486, 0.231);
 
             fragmentColor =
                 vec4(baseColor * diffuse, 1.0);
@@ -302,13 +300,26 @@ public:
                 return static_cast<GLfloat>(value);
             });
 
+        // Utilise une plage de profondeur complète pour l'auto-occlusion du modèle.
+        glDepthRangef(0.0f, 1.0f);
+
         glEnable(GL_DEPTH_TEST);
+
+        // Impérativement avant glClear : MapLibre fournit initialement un depth mask
+        // en lecture seule à la custom layer.
         glDepthMask(GL_TRUE);
+
+        // Un éventuel scissor MapLibre ne doit pas limiter le nettoyage du depth buffer.
+        glDisable(GL_SCISSOR_TEST);
+
+        glClearDepthf(1.0f);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
         glDepthFunc(GL_LEQUAL);
 
-        glDisable(GL_STENCIL_TEST);
-        glDisable(GL_SCISSOR_TEST);
+        // Conservé désactivé pendant la validation du modèle.
         glDisable(GL_CULL_FACE);
+
         glDisable(GL_BLEND);
 
         glUseProgram(program);
