@@ -62,6 +62,7 @@ val unzip = tasks.register<Copy>("unzip") {
     }
 }
 
-tasks.named("preBuild") {
+// Vulkan validation layers are only required by the Vulkan debug variant.
+tasks.matching { it.name == "preVulkanDebugBuild" }.configureEach {
     dependsOn(unzip)
 }
