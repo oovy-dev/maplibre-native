@@ -47,7 +47,6 @@ RenderCustomLayer::~RenderCustomLayer() {
 
 void RenderCustomLayer::evaluate(const PropertyEvaluationParameters&) {
     passes = RenderPass::Translucent;
-    // It is fine to not update `evaluatedProperties`, as `baseImpl` should never be updated for this layer.
 }
 
 bool RenderCustomLayer::hasTransition() const {
@@ -59,6 +58,10 @@ bool RenderCustomLayer::hasCrossfade() const {
 
 void RenderCustomLayer::markContextDestroyed() {
     contextDestroyed = true;
+}
+
+bool RenderCustomLayer::is3D() const {
+    return host && host->is3D();
 }
 
 void RenderCustomLayer::prepare(const LayerPrepareParameters&) {}
@@ -99,7 +102,11 @@ void RenderCustomLayer::update([[maybe_unused]] gfx::ShaderRegistry& shaders,
         // create empty drawable using a builder
         std::unique_ptr<gfx::DrawableBuilder> builder = context.createDrawableBuilder(getID());
         auto& drawable = builder->getCurrentDrawable(true);
+        const bool renderAs3D = is3D();
+        
         drawable->setIsCustom(true);
+        drawable->setIs3D(renderAs3D);
+        drawable->setEnableDepth(renderAs3D);
         drawable->setRenderPass(RenderPass::Translucent);
 
         // assign tweaker to drawable

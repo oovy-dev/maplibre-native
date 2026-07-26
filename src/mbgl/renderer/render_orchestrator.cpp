@@ -377,7 +377,10 @@ std::unique_ptr<RenderTree> RenderOrchestrator::createRenderTree(
             const auto* layerInfo = layer.baseImpl->getTypeInfo();
             const bool layerIsVisible = layer.baseImpl->visibility != style::VisibilityType::None;
             const bool zoomFitsLayer = layer.supportsZoom(zoomHistory.lastZoom);
-            renderTreeParameters->has3D |= (layerInfo->pass3d == LayerTypeInfo::Pass3D::Required);
+            renderTreeParameters->has3D |=
+                layer.is3D() ||
+                (layerInfo->pass3d ==
+                LayerTypeInfo::Pass3D::Required);
 
             if (layerInfo->source != LayerTypeInfo::Source::NotRequired) {
                 if (layer.baseImpl->source == sourceImpl->id) {

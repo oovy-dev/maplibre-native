@@ -21,6 +21,12 @@ public:
      * Resources that are acquired in this method must be released in the
      * `deinitialize` function.
      */
+    /**
+    * Returns true when this host renders world-space 3D geometry.
+    */
+    virtual bool is3D() const {
+        return false;
+    }
     virtual void initialize() = 0;
 
     /**

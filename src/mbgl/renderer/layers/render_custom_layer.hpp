@@ -10,6 +10,8 @@ public:
     explicit RenderCustomLayer(Immutable<style::CustomLayer::Impl>);
     ~RenderCustomLayer() override;
 
+    bool is3D() const override;
+
     /// Generate any changes needed by the layer
     void update(gfx::ShaderRegistry&,
                 gfx::Context&,

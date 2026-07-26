@@ -20,8 +20,17 @@ void DrawableCustomLayerHostTweaker::execute([[maybe_unused]] gfx::Drawable& dra
                                              mbgl::PaintParameters& paintParameters) {
     // custom drawing
     auto& context = paintParameters.context;
-    context.resetState(paintParameters.depthModeForSublayer(0, gfx::DepthMaskType::ReadOnly),
-                       paintParameters.colorModeForRenderPass());
+    const auto depthMode = drawable.getIs3D()
+        ? paintParameters.depthModeFor3D()
+        : paintParameters.depthModeForSublayer(
+            0,
+            gfx::DepthMaskType::ReadOnly
+        );
+
+    context.resetState(
+        depthMode,
+        paintParameters.colorModeForRenderPass()
+    );
 
 #if MLN_RENDER_BACKEND_METAL
     const auto& mtlRenderPass = static_cast<mtl::RenderPass*>(paintParameters.renderPass.get());

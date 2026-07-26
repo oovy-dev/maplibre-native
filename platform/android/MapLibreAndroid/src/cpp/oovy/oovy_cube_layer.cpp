@@ -86,6 +86,9 @@ public:
     )
         : mesh(std::move(meshData)) {
     }
+    bool is3D() const override {
+        return true;
+    }
     void initialize() override {
         __android_log_write(
             ANDROID_LOG_INFO,
@@ -299,23 +302,6 @@ public:
             [](double value) {
                 return static_cast<GLfloat>(value);
             });
-
-        // Utilise une plage de profondeur complète pour l'auto-occlusion du modèle.
-        glDepthRangef(0.0f, 1.0f);
-
-        glEnable(GL_DEPTH_TEST);
-
-        // Impérativement avant glClear : MapLibre fournit initialement un depth mask
-        // en lecture seule à la custom layer.
-        glDepthMask(GL_TRUE);
-
-        // Un éventuel scissor MapLibre ne doit pas limiter le nettoyage du depth buffer.
-        glDisable(GL_SCISSOR_TEST);
-
-        glClearDepthf(1.0f);
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        glDepthFunc(GL_LEQUAL);
 
         // Conservé désactivé pendant la validation du modèle.
         glDisable(GL_CULL_FACE);
