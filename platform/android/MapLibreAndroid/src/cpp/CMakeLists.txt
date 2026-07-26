@@ -215,6 +215,8 @@ add_library(maplibre SHARED
             ${PROJECT_SOURCE_DIR}/tile/tile_operation.cpp
             ${PROJECT_SOURCE_DIR}/oovy/oovy_cube_layer.cpp
             ${PROJECT_SOURCE_DIR}/oovy/oovy_glb_inspector.cpp
+            ${PROJECT_SOURCE_DIR}/oovy/oovy_model_descriptor_jni.cpp
+            ${PROJECT_SOURCE_DIR}/oovy/oovy_model_layer.cpp
             ${PROJECT_SOURCE_DIR}/util/default_style.cpp
             ${PROJECT_SOURCE_DIR}/util/tile_server_options.cpp
             ${PROJECT_SOURCE_DIR}/util/default_style.hpp

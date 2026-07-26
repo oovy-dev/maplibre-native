@@ -103,7 +103,7 @@ void RenderCustomLayer::update([[maybe_unused]] gfx::ShaderRegistry& shaders,
         std::unique_ptr<gfx::DrawableBuilder> builder = context.createDrawableBuilder(getID());
         auto& drawable = builder->getCurrentDrawable(true);
         const bool renderAs3D = is3D();
-        
+
         drawable->setIsCustom(true);
         drawable->setIs3D(renderAs3D);
         drawable->setEnableDepth(renderAs3D);
