@@ -14,6 +14,7 @@
 #include "oovy_glb_inspector.hpp"
 #include "oovy_model_descriptor.hpp"
 #include "oovy_model_descriptor_jni.hpp"
+#include "oovy_model_host.hpp"
 
 namespace {
 
@@ -117,70 +118,6 @@ bool readBinaryFile(
 
     return true;
 }
-
-class ParsedModelDescriptorHost final
-    : public mbgl::style::CustomLayerHost {
-public:
-    ParsedModelDescriptorHost(
-        oovy::OovyModelDescriptor descriptor_,
-        oovy::GlbSummary summary_,
-        float widthMeters_,
-        float depthMeters_,
-        float heightMeters_
-    )
-        : descriptor(std::move(descriptor_)),
-          summary(std::move(summary_)),
-          widthMeters(widthMeters_),
-          depthMeters(depthMeters_),
-          heightMeters(heightMeters_) {
-    }
-
-    bool is3D() const override {
-        return true;
-    }
-
-    void initialize() override {
-        __android_log_print(
-            ANDROID_LOG_INFO,
-            kLogTag,
-            "Parsed host initialized: assetId=%s "
-            "vertices=%zu indices=%zu "
-            "dimensions=(%.2f, %.2f, %.2f)m",
-            descriptor.assetId.c_str(),
-            summary.vertexCount,
-            summary.indexCount,
-            widthMeters,
-            depthMeters,
-            heightMeters
-        );
-    }
-
-    void render(
-        const mbgl::style::CustomLayerRenderParameters&
-    ) override {
-        // GPU rendering will be connected in the next migration step.
-    }
-
-    void contextLost() override {
-    }
-
-    void deinitialize() override {
-        __android_log_print(
-            ANDROID_LOG_INFO,
-            kLogTag,
-            "Parsed host deinitialized: assetId=%s",
-            descriptor.assetId.c_str()
-        );
-    }
-
-private:
-    oovy::OovyModelDescriptor descriptor;
-    oovy::GlbSummary summary;
-
-    float widthMeters = 0.0f;
-    float depthMeters = 0.0f;
-    float heightMeters = 0.0f;
-};
 
 void throwJavaException(
     JNIEnv* env,
@@ -362,17 +299,13 @@ Java_com_oovy_maplibre_style_layers_OovyModelLayer_nativeCreateHost(
         mesh.heightMeters
     );
 
-    /*
-     * Seules les métadonnées sont conservées durant cette étape.
-     * Les gros buffers CPU du mesh sont libérés au retour de cette fonction.
-     */
-    return reinterpret_cast<jlong>(
-        std::make_unique<ParsedModelDescriptorHost>(
+    auto host =
+        oovy::createModelHost(
             std::move(descriptor),
-            std::move(summary),
-            mesh.widthMeters,
-            mesh.depthMeters,
-            mesh.heightMeters
-        ).release()
+            std::move(mesh)
+        );
+
+    return reinterpret_cast<jlong>(
+        host.release()
     );
 }

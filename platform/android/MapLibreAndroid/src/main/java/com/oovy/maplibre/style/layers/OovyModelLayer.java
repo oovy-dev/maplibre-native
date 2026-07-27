@@ -8,8 +8,8 @@ import org.maplibre.android.style.layers.CustomLayer;
 /**
  * Generic MapLibre custom layer for an OOVY georeferenced 3D model.
  *
- * The native implementation validates the descriptor and parses its local GLB
- * file. GPU rendering will be connected in a later migration step.
+ * The native implementation loads and renders the local GLB model described
+ * by the supplied immutable descriptor.
  */
 @Keep
 public final class OovyModelLayer extends CustomLayer {
