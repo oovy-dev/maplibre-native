@@ -81,10 +81,10 @@ class OovyModelHost final
 public:
     OovyModelHost(
         oovy::OovyModelDescriptor descriptor_,
-        oovy::GlbMeshData mesh_
+        oovy::OovyModelAssetPtr asset_
     )
         : descriptor(std::move(descriptor_)),
-          mesh(std::move(mesh_)) {
+        asset(std::move(asset_)) {
     }
 
     bool is3D() const override {
@@ -337,6 +337,13 @@ public:
             return;
         }
 
+        if (!asset) {
+            return;
+        }
+
+        const oovy::GlbMeshData& mesh =
+            asset->mesh;
+
         if (
             program == 0 ||
             vertexArray == 0 ||
@@ -348,7 +355,8 @@ public:
 
         if (
             mesh.widthMeters <= 0.0f ||
-            mesh.depthMeters <= 0.0f
+            mesh.depthMeters <= 0.0f ||
+            mesh.heightMeters <= 0.0f
         ) {
             return;
         }
@@ -382,17 +390,51 @@ public:
             return;
         }
 
-        const double horizontalScaleX =
-            descriptor.targetFootprintWidthMeters /
+        const double heightScale =
+            descriptor.targetHeightMeters /
+            static_cast<double>(
+                mesh.heightMeters
+            );
+
+        if (
+            !std::isfinite(heightScale) ||
+            heightScale <= 0.0
+        ) {
+            return;
+        }
+
+        const double appliedUniformScale =
+            heightScale *
+            descriptor.uniformScale;
+
+        const double scaledModelWidth =
             static_cast<double>(
                 mesh.widthMeters
-            );
+            ) *
+            heightScale;
+
+        const double scaledModelDepth =
+            static_cast<double>(
+                mesh.depthMeters
+            ) *
+            heightScale;
+
+        if (
+            !std::isfinite(scaledModelWidth) ||
+            !std::isfinite(scaledModelDepth) ||
+            scaledModelWidth <= 0.0 ||
+            scaledModelDepth <= 0.0
+        ) {
+            return;
+        }
+
+        const double horizontalScaleX =
+            descriptor.targetFootprintWidthMeters /
+            scaledModelWidth;
 
         const double horizontalScaleY =
             descriptor.targetFootprintDepthMeters /
-            static_cast<double>(
-                mesh.depthMeters
-            );
+            scaledModelDepth;
 
         const double maxFloat =
             static_cast<double>(
@@ -400,13 +442,15 @@ public:
             );
 
         if (
+            !std::isfinite(appliedUniformScale) ||
             !std::isfinite(horizontalScaleX) ||
             !std::isfinite(horizontalScaleY) ||
+            appliedUniformScale <= 0.0 ||
             horizontalScaleX <= 0.0 ||
             horizontalScaleY <= 0.0 ||
+            appliedUniformScale > maxFloat ||
             horizontalScaleX > maxFloat ||
             horizontalScaleY > maxFloat ||
-            descriptor.uniformScale > maxFloat ||
             std::abs(descriptor.altitudeMeters) > maxFloat
         ) {
             return;
@@ -492,7 +536,7 @@ public:
         glUniform1f(
             uniformScaleUniform,
             static_cast<float>(
-                descriptor.uniformScale
+                appliedUniformScale
             )
         );
 
@@ -584,6 +628,18 @@ public:
 
 private:
     void createGeometry() {
+        if (!asset) {
+            __android_log_print(
+                ANDROID_LOG_ERROR,
+                kLogTag,
+                "No CPU model asset available: assetId=%s",
+                descriptor.assetId.c_str()
+            );
+
+            return;
+        }
+        const oovy::GlbMeshData& mesh =
+            asset->mesh;
         if (
             mesh.vertices.empty() ||
             mesh.indices.empty()
@@ -733,7 +789,7 @@ private:
     }
 
     oovy::OovyModelDescriptor descriptor;
-    oovy::GlbMeshData mesh;
+    oovy::OovyModelAssetPtr asset;
 
     GLuint program = 0;
     GLuint vertexArray = 0;
@@ -758,11 +814,15 @@ namespace oovy {
 
 std::unique_ptr<mbgl::style::CustomLayerHost> createModelHost(
     OovyModelDescriptor descriptor,
-    GlbMeshData mesh
+    OovyModelAssetPtr asset
 ) {
+    if (!asset) {
+        return {};
+    }
+
     return std::make_unique<OovyModelHost>(
         std::move(descriptor),
-        std::move(mesh)
+        std::move(asset)
     );
 }
 

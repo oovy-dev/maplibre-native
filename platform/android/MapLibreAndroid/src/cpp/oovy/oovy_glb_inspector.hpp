@@ -35,7 +35,6 @@ struct GlbMeshData {
 bool loadGlbMesh(
     const std::uint8_t* bytes,
     std::size_t byteCount,
-    float targetHeightMeters,
     GlbMeshData& mesh,
     GlbSummary& summary,
     std::string& error

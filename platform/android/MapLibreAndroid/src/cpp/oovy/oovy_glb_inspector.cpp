@@ -335,10 +335,9 @@ void fillSummary(
     }
 }
 
-bool normalizeModel(
+bool canonicalizeModel(
     GlbMeshData& mesh,
     const Bounds& bounds,
-    float targetHeightMeters,
     std::string& error
 ) {
     if (!bounds.valid()) {
@@ -346,27 +345,18 @@ bool normalizeModel(
         return false;
     }
 
-    const float rawWidth =
-        bounds.maxX - bounds.minX;
+    const float rawWidth = bounds.maxX - bounds.minX;
+    const float rawHeight = bounds.maxY - bounds.minY;
+    const float rawDepth = bounds.maxZ - bounds.minZ;
 
-    const float rawHeight =
-        bounds.maxY - bounds.minY;
-
-    const float rawDepth =
-        bounds.maxZ - bounds.minZ;
-
-    if (rawHeight <= 0.0f) {
-        error = "Model height must be greater than zero";
+    if (
+        rawWidth <= 0.0f ||
+        rawHeight <= 0.0f ||
+        rawDepth <= 0.0f
+    ) {
+        error = "Model dimensions must be greater than zero";
         return false;
     }
-
-    if (targetHeightMeters <= 0.0f) {
-        error = "Target model height must be greater than zero";
-        return false;
-    }
-
-    const float scale =
-        targetHeightMeters / rawHeight;
 
     const float centerX =
         (bounds.minX + bounds.maxX) * 0.5f;
@@ -381,24 +371,14 @@ bool normalizeModel(
 
         // glTF: X right, Y up, Z forward.
         // Map local space: X east, Y south, Z up.
-        vertex.xMeters =
-            (gltfX - centerX) * scale;
-
-        vertex.yMeters =
-            -(gltfZ - centerZ) * scale;
-
-        vertex.zMeters =
-            (gltfY - bounds.minY) * scale;
+        vertex.xMeters = gltfX - centerX;
+        vertex.yMeters = -(gltfZ - centerZ);
+        vertex.zMeters = gltfY - bounds.minY;
     }
 
-    mesh.widthMeters =
-        rawWidth * scale;
-
-    mesh.depthMeters =
-        rawDepth * scale;
-
-    mesh.heightMeters =
-        rawHeight * scale;
+    mesh.widthMeters = rawWidth;
+    mesh.depthMeters = rawDepth;
+    mesh.heightMeters = rawHeight;
 
     return true;
 }
@@ -408,7 +388,6 @@ bool normalizeModel(
 bool loadGlbMesh(
     const std::uint8_t* bytes,
     std::size_t byteCount,
-    float targetHeightMeters,
     GlbMeshData& mesh,
     GlbSummary& summary,
     std::string& error
@@ -542,11 +521,11 @@ bool loadGlbMesh(
     }
 
     if (
-        !normalizeModel(
+        !canonicalizeModel(
             mesh,
             bounds,
-            targetHeightMeters,
-            error)
+            error
+        )
     ) {
         mesh = {};
         return false;

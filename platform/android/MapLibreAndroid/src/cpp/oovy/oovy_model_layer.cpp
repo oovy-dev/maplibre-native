@@ -1,17 +1,13 @@
 #include <android/log.h>
 #include <jni.h>
 
-#include <cstdint>
-#include <fstream>
-#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include <mbgl/style/layers/custom_layer.hpp>
 
-#include "oovy_glb_inspector.hpp"
+#include "oovy_model_asset.hpp"
 #include "oovy_model_descriptor.hpp"
 #include "oovy_model_descriptor_jni.hpp"
 #include "oovy_model_host.hpp"
@@ -19,105 +15,6 @@
 namespace {
 
 constexpr const char* kLogTag = "OovyModelLayer";
-
-bool readBinaryFile(
-    const std::string& path,
-    std::vector<std::uint8_t>& bytes,
-    std::string& error
-) {
-    bytes.clear();
-    error.clear();
-
-    std::ifstream input(
-        path,
-        std::ios::binary |
-            std::ios::ate
-    );
-
-    if (!input.is_open()) {
-        error =
-            "Unable to open local GLB file: " +
-            path;
-
-        return false;
-    }
-
-    const std::streamoff byteCount =
-        static_cast<std::streamoff>(
-            input.tellg()
-        );
-
-    if (byteCount <= 0) {
-        error =
-            "Local GLB file is empty or unreadable: " +
-            path;
-
-        return false;
-    }
-
-    const auto unsignedByteCount =
-        static_cast<std::uintmax_t>(
-            byteCount
-        );
-
-    if (
-        unsignedByteCount >
-        static_cast<std::uintmax_t>(
-            std::numeric_limits<std::size_t>::max()
-        )
-    ) {
-        error =
-            "Local GLB file exceeds native memory range: " +
-            path;
-
-        return false;
-    }
-
-    if (
-        byteCount >
-        static_cast<std::streamoff>(
-            std::numeric_limits<std::streamsize>::max()
-        )
-    ) {
-        error =
-            "Local GLB file exceeds stream size range: " +
-            path;
-
-        return false;
-    }
-
-    bytes.resize(
-        static_cast<std::size_t>(
-            byteCount
-        )
-    );
-
-    input.seekg(
-        0,
-        std::ios::beg
-    );
-
-    input.read(
-        reinterpret_cast<char*>(
-            bytes.data()
-        ),
-        static_cast<std::streamsize>(
-            byteCount
-        )
-    );
-
-    if (!input) {
-        bytes.clear();
-
-        error =
-            "Unable to read complete local GLB file: " +
-            path;
-
-        return false;
-    }
-
-    return true;
-}
 
 void throwJavaException(
     JNIEnv* env,
@@ -184,87 +81,21 @@ Java_com_oovy_maplibre_style_layers_OovyModelLayer_nativeCreateHost(
         return 0;
     }
 
-    if (
-        descriptor.targetHeightMeters >
-        static_cast<double>(
-            std::numeric_limits<float>::max()
-        )
-    ) {
-        error =
-            "targetHeightMeters exceeds the native float range";
-
-        __android_log_print(
-            ANDROID_LOG_ERROR,
-            kLogTag,
-            "%s: assetId=%s",
-            error.c_str(),
-            descriptor.assetId.c_str()
-        );
-
-        throwJavaException(
-            env,
-            "java/lang/IllegalArgumentException",
-            error
-        );
-
-        return 0;
-    }
-
-    std::vector<std::uint8_t> bytes;
-
-    if (
-        !readBinaryFile(
+    auto asset =
+        oovy::loadModelAssetSync(
+            descriptor.assetId,
             descriptor.localPath,
-            bytes,
-            error
-        )
-    ) {
-        __android_log_print(
-            ANDROID_LOG_ERROR,
-            kLogTag,
-            "Local GLB read failed: assetId=%s error=%s",
-            descriptor.assetId.c_str(),
-            error.c_str()
-        );
-
-        throwJavaException(
-            env,
-            "java/lang/IllegalStateException",
             error
         );
 
-        return 0;
-    }
-
-    __android_log_print(
-        ANDROID_LOG_INFO,
-        kLogTag,
-        "Local GLB read: assetId=%s bytes=%zu path=%s",
-        descriptor.assetId.c_str(),
-        bytes.size(),
-        descriptor.localPath.c_str()
-    );
-
-    oovy::GlbMeshData mesh;
-    oovy::GlbSummary summary;
-
-    if (
-        !oovy::loadGlbMesh(
-            bytes.data(),
-            bytes.size(),
-            static_cast<float>(
-                descriptor.targetHeightMeters
-            ),
-            mesh,
-            summary,
-            error
-        )
-    ) {
+    if (!asset) {
         __android_log_print(
             ANDROID_LOG_ERROR,
             kLogTag,
-            "Local GLB parsing failed: assetId=%s error=%s",
+            "CPU model loading failed: assetId=%s "
+            "path=%s error=%s",
             descriptor.assetId.c_str(),
+            descriptor.localPath.c_str(),
             error.c_str()
         );
 
@@ -272,21 +103,29 @@ Java_com_oovy_maplibre_style_layers_OovyModelLayer_nativeCreateHost(
             env,
             "java/lang/IllegalStateException",
             error.empty()
-                ? "Unable to parse local GLB model"
+                ? "Unable to load local GLB model"
                 : error
         );
 
         return 0;
     }
 
+    const oovy::GlbSummary& summary =
+        asset->summary;
+
+    const oovy::GlbMeshData& mesh =
+        asset->mesh;
+
     __android_log_print(
         ANDROID_LOG_INFO,
         kLogTag,
-        "Local GLB parsed: assetId=%s "
+        "CPU model loaded: assetId=%s path=%s bytes=%zu "
         "scenes=%zu nodes=%zu meshes=%zu primitives=%zu "
         "vertices=%zu indices=%zu materials=%zu "
-        "dimensions=(%.2f, %.2f, %.2f)m",
-        descriptor.assetId.c_str(),
+        "dimensions=(%.2f, %.2f, %.2f)",
+        asset->assetId.c_str(),
+        asset->sourcePath.c_str(),
+        asset->sourceByteCount,
         summary.sceneCount,
         summary.nodeCount,
         summary.meshCount,
@@ -299,11 +138,35 @@ Java_com_oovy_maplibre_style_layers_OovyModelLayer_nativeCreateHost(
         mesh.heightMeters
     );
 
+    const std::string assetId =
+        descriptor.assetId;
+
     auto host =
         oovy::createModelHost(
             std::move(descriptor),
-            std::move(mesh)
+            std::move(asset)
         );
+
+    if (!host) {
+        error =
+            "Unable to create GPU model host";
+
+        __android_log_print(
+            ANDROID_LOG_ERROR,
+            kLogTag,
+            "%s: assetId=%s",
+            error.c_str(),
+            assetId.c_str()
+        );
+
+        throwJavaException(
+            env,
+            "java/lang/IllegalStateException",
+            error
+        );
+
+        return 0;
+    }
 
     return reinterpret_cast<jlong>(
         host.release()
