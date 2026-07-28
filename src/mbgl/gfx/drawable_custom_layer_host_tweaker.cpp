@@ -36,9 +36,9 @@ void DrawableCustomLayerHostTweaker::execute([[maybe_unused]] gfx::Drawable& dra
     const auto& mtlRenderPass = static_cast<mtl::RenderPass*>(paintParameters.renderPass.get());
     mtlRenderPass->resetState();
 
-    style::mtl::CustomLayerRenderParameters parameters(paintParameters);
+    style::mtl::CustomLayerRenderParameters parameters(paintParameters, drawable.getIs3D());
 #else
-    style::CustomLayerRenderParameters parameters(paintParameters);
+    style::CustomLayerRenderParameters parameters(paintParameters, drawable.getIs3D());
 #endif
 
     host->render(parameters);

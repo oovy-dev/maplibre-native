@@ -9,8 +9,10 @@ namespace mbgl {
 namespace style {
 namespace mtl {
 
-CustomLayerRenderParameters::CustomLayerRenderParameters(const mbgl::PaintParameters& paintParameters)
-    : mbgl::style::CustomLayerRenderParameters(paintParameters) {
+CustomLayerRenderParameters::CustomLayerRenderParameters(
+    const mbgl::PaintParameters& paintParameters,
+    bool use3DProjection)
+    : mbgl::style::CustomLayerRenderParameters(paintParameters, use3DProjection) {
     const mbgl::mtl::RenderPass& renderPass = static_cast<mbgl::mtl::RenderPass&>(*paintParameters.renderPass);
     encoder = renderPass.getMetalEncoder();
 }

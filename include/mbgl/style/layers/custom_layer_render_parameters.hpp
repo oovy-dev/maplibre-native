@@ -24,7 +24,7 @@ struct CustomLayerRenderParameters {
     double fieldOfView;
     std::array<double, 16> projectionMatrix;
 
-    CustomLayerRenderParameters(const PaintParameters&);
+    CustomLayerRenderParameters(const PaintParameters&, bool use3DProjection = false);
 };
 
 } // namespace style

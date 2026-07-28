@@ -22,7 +22,7 @@ namespace mtl {
 struct CustomLayerRenderParameters : mbgl::style::CustomLayerRenderParameters {
     mbgl::mtl::MTLRenderCommandEncoderPtr encoder;
 
-    CustomLayerRenderParameters(const PaintParameters&);
+    CustomLayerRenderParameters(const PaintParameters&, bool use3DProjection = false);
 };
 
 } // namespace mtl

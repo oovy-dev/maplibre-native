@@ -5,7 +5,9 @@
 namespace mbgl {
 namespace style {
 
-CustomLayerRenderParameters::CustomLayerRenderParameters(const mbgl::PaintParameters& paintParameters) {
+CustomLayerRenderParameters::CustomLayerRenderParameters(
+    const mbgl::PaintParameters& paintParameters,
+    bool use3DProjection) {
     const TransformState& state = paintParameters.state;
     width = state.getSize().width;
     height = state.getSize().height;
@@ -15,9 +17,9 @@ CustomLayerRenderParameters::CustomLayerRenderParameters(const mbgl::PaintParame
     bearing = util::rad2deg(-state.getBearing());
     pitch = state.getPitch();
     fieldOfView = state.getFieldOfView();
-    mat4 projMatrix;
-    state.getProjMatrix(projMatrix);
-    projectionMatrix = projMatrix;
+    projectionMatrix = use3DProjection
+        ? paintParameters.transformParams.nearClippedProjMatrix
+        : paintParameters.transformParams.projMatrix;
 }
 
 } // namespace style
